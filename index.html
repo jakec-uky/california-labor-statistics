@@ -3,7 +3,7 @@
 
 <head>
 	<meta charset=utf-8 />
-	<title>Labor in California</title>
+	<title>MAP673 Lab 02</title>
 	<meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
 
 	<link rel="stylesheet" href="https://unpkg.com/leaflet@1.3.1/dist/leaflet.css" />
@@ -54,22 +54,46 @@
     }
     #legend {
 			padding: 6px 8px;
-			/* font-size: 1em; */
+			//font-size: 1em;
 			background: #222222;
 			box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
 			border-radius: 5px;
 			max-width: 165px;
 		}
+		/*#legend h5 {
+			font-size: 2.1rem;
+		}*/
 		#legend span {
 			width: 20px;
 			height: 20px;
 			float: left;
 			margin: 0 10px 4px 0;
 		}
+		/*#legend label {
+			font-size: 1.2em;
+		}*/
 		#legend label:after {
 			content: '';
 			display: block;
 			clear: both;
+		}
+
+		.pacific-label {
+			position: absolute;
+			width:0px;
+			font-size:1.5em;
+			color: rgb(200, 200, 200);
+			background-color: rgba(240, 240, 240, 0);
+			border: 0px solid rgba(240, 240, 240, 0);
+			box-shadow: 0 1px 3px rgba(240, 240, 240, 0);
+		}
+
+		.pacific-label::before {
+			border-right-color: rgba(240, 240, 240, 0);
+		}
+
+		.leaflet-bar a.leaflet-disabled {
+			background-color: #333333;
 		}
 
 
@@ -127,7 +151,7 @@
 
 
   <!--end html, load js-->
-  <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+  <script src="http://code.jquery.com/jquery-3.2.1.min.js"></script>
 	<script src="https://unpkg.com/leaflet@1.3.1/dist/leaflet.js"></script>
 	<script src="https://unpkg.com/simple-statistics@5.2.1/dist/simple-statistics.min.js"></script>
 
@@ -136,19 +160,31 @@
 
   //initial map options, will allow for typical interactions
   var options = {
-    zoomSnap: .5
+    zoomSnap: .5,
+		minZoom: 6
   },
+
   map = L.map('map', options),
+
   attributeValue = "HC01_VC67", //employed in private sector
-  normValue = "HC01_VC66"; //all employed persons in county
+
+  normValue = "HC01_VC66", //all employed persons in county
 
   //labels for various attributes
-  var labels = {
+  labels = {
     "HC01_VC67": "Private sector employees",
     "HC01_VC68": "Government sector employees",
     "HC01_VC69": "Self-employed persons, not incorporated",
     "HC01_VC70": "Unpaid family workers"
   };
+
+	var pacificLabel = new L.marker([37.9, -129.2], { opacity: 0.00 }); //opacity may be set to zero
+	pacificLabel.bindTooltip("<em>Pacific Ocean<em>", {permanent: true, className: "pacific-label", offset: [0, 0] });
+	pacificLabel.addTo(map);
+
+	$.getJSON("data/adjacent_states.json", function(states) {
+		drawAdjacentStates(states)
+	})
 
   // AJAX call to load county-level data
   $.getJSON("data/ca_labor.json", function(data) {
@@ -204,6 +240,19 @@
     updateMap(dataLayer) //update map with the current data attribute
 
   }
+
+	function drawAdjacentStates(states) {
+		var dataLayer = L.geoJson(states, {
+			style: function(feature) {
+				return {
+					color: '#333333',
+					weight: 1,
+					fillOpacity: 1,
+					fillColor: '#444444'
+				}
+			}
+		}).addTo(map);
+	};
 
   function updateMap(dataLayer) {
     // get the class breaks for the current data attribute
@@ -347,7 +396,7 @@
       //console.log('something changed at ' + Date.now());
       //console.log(this); //'this' returns the entire <select id="occupied"></select> element
       //console.log(this.value); //much more helpful to return the specific value associated with the change
-      attributeValue = this.value;//this.value; //reset the GLOBAL variable established on line 116. but we still have to redraw the map with this new variable value.
+      attributeValue = $(this).val();//this.value; //reset the GLOBAL variable established on line 116. but we still have to redraw the map with this new variable value.
       //call updateMap function
       updateMap(dataLayer);
     });
